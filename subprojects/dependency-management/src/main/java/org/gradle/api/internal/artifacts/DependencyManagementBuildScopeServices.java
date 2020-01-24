@@ -124,6 +124,8 @@ import org.gradle.cache.internal.InMemoryCacheDecoratorFactory;
 import org.gradle.cache.internal.ProducerGuard;
 import org.gradle.initialization.InternalBuildFinishedListener;
 import org.gradle.initialization.ProjectAccessListener;
+import org.gradle.initialization.layout.BuildLayoutConfiguration;
+import org.gradle.initialization.layout.BuildLayoutFactory;
 import org.gradle.initialization.layout.ProjectCacheDir;
 import org.gradle.internal.build.BuildState;
 import org.gradle.internal.build.BuildStateRegistry;
@@ -164,6 +166,7 @@ import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.util.BuildCommencedTimeProvider;
 import org.gradle.util.internal.SimpleMapInterner;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
@@ -426,8 +429,8 @@ class DependencyManagementBuildScopeServices {
                                                                 BuildOperationExecutor buildOperationExecutor,
                                                                 ProducerGuard<ExternalResourceName> producerGuard,
                                                                 FileResourceRepository fileResourceRepository,
-                                                                ChecksumService checksumService) {
-        StartParameterResolutionOverride startParameterResolutionOverride = new StartParameterResolutionOverride(startParameter);
+                                                                ChecksumService checksumService,
+                                                                StartParameterResolutionOverride startParameterResolutionOverride) {
         return new RepositoryTransportFactory(
             resourceConnectorFactories,
             progressLoggerFactory,
@@ -445,8 +448,10 @@ class DependencyManagementBuildScopeServices {
         return new ConnectionFailureRepositoryBlacklister();
     }
 
-    StartParameterResolutionOverride createStartParameterResolutionOverride(StartParameter startParameter) {
-        return new StartParameterResolutionOverride(startParameter);
+    StartParameterResolutionOverride createStartParameterResolutionOverride(StartParameter startParameter, BuildLayoutFactory buildLayoutFactory) {
+        File rootDirectory = buildLayoutFactory.getLayoutFor(new BuildLayoutConfiguration(startParameter)).getRootDirectory();
+        File gradleDir = new File(rootDirectory, "gradle");
+        return new StartParameterResolutionOverride(startParameter, gradleDir);
     }
 
     DependencyVerificationOverride createDependencyVerificationOverride(StartParameterResolutionOverride startParameterResolutionOverride,
